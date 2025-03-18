@@ -237,7 +237,8 @@ class _TextPrinterState extends State<TextPrinter> {
     );
 
     // Print image:
-    final ByteData data = await rootBundle.load('assets/images/logo.png');
+    final ByteData data =
+        await rootBundle.load('assets/assets/images/logo.png');
     final Uint8List imgBytes = data.buffer.asUint8List();
     final img.Image image = img.decodeImage(imgBytes)!;
 
@@ -250,7 +251,7 @@ class _TextPrinterState extends State<TextPrinter> {
     bytes += generator.barcode(Barcode.upcA(barData));
 
     // Print mixed (chinese + latin) text. Only for printers supporting Kanji mode
-    generator.text(
+    bytes += generator.text(
       'hello ! 中文字 # world @ éphémère &',
       styles: const PosStyles(
         height: PosTextSize.size2,
@@ -261,6 +262,8 @@ class _TextPrinterState extends State<TextPrinter> {
 
     bytes += generator.feed(2);
     bytes += generator.cut();
+
+    await printBytes(bytes);
   }
 
   printText() async {
@@ -383,19 +386,26 @@ class _TextPrinterState extends State<TextPrinter> {
     List<int> bytes = [];
 
     // Print image:
-    final ByteData data = await rootBundle.load('assets/images/logo.png');
+    final ByteData data =
+        await rootBundle.load('assets/assets/images/logo.png');
     final Uint8List imgBytes = data.buffer.asUint8List();
     final img.Image image = img.decodeImage(imgBytes)!;
 
     // Print image using an alternative (obsolette) command
     // okay
-    final ratio = image.width / image.height;
     bytes += generator.imageRaster(
-      img.copyResize(
-        image,
-        width: 297 * 2,
-        height: (image.height * ratio).toInt(),
-      ),
+      image,
+    );
+
+    final ByteData data2 =
+        await rootBundle.load('assets/assets/images/ic_logo.png');
+    final Uint8List imgBytes2 = data2.buffer.asUint8List();
+    final img.Image image2 = img.decodeImage(imgBytes2)!;
+
+    // Print image using an alternative (obsolette) command
+    // okay
+    bytes += generator.imageRaster(
+      image2,
     );
 
     bytes += generator.feed(2);
