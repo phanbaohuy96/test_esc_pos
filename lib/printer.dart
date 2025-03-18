@@ -18,7 +18,10 @@ class TextPrinter extends StatefulWidget {
 class _TextPrinterState extends State<TextPrinter> {
   late TextEditingController printAddressCtrl = TextEditingController();
   final usbDevices = ValueNotifier<List<IUsbDeviceInfo>>([]);
+
   IUsbDeviceInfo? usbDevice;
+
+  final output = ValueNotifier<List>([]);
 
   late PrintMode mode = PrintMode.usb;
 
@@ -56,18 +59,24 @@ class _TextPrinterState extends State<TextPrinter> {
           children: [
             if (mode == PrintMode.usb) ...[
               ElevatedButton(
-                onPressed: () {
-                  PrintingService().getUsbDevices();
+                onPressed: () async {
+                  usbDevices.value = await PrintingService().getUsbDevices();
+                  setState(() {
+                    if (usbDevices.value.isNotEmpty) {
+                      usbDevice = usbDevices.value.first;
+                    }
+                  });
                 },
                 child: const Text('Get Usb devices'),
               ),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 350),
+                constraints: const BoxConstraints(maxHeight: 150),
                 child: ValueListenableBuilder<List<IUsbDeviceInfo>>(
                   valueListenable: usbDevices,
                   builder: (context, devices, child) => devices.isEmpty
                       ? child!
                       : ListView.builder(
+                          itemCount: devices.length,
                           itemBuilder: (context, index) => InkWell(
                             onTap: () {
                               setState(() {
@@ -142,6 +151,18 @@ class _TextPrinterState extends State<TextPrinter> {
                     child: const Text('print image'),
                   ),
                 ],
+              ),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ValueListenableBuilder<List>(
+                valueListenable: output,
+                builder: (context, devices, child) => ListView.builder(
+                  itemCount: devices.length,
+                  itemBuilder: (context, index) => Text(
+                    devices[index].toString(),
+                  ),
+                ),
               ),
             ),
           ],
@@ -401,7 +422,8 @@ class _TextPrinterState extends State<TextPrinter> {
           bytes: bytes,
         );
       }
-    } catch (e) {
+    } catch (e, s) {
+      output.value = [e, s];
       debugPrint(e.toString());
     }
   }
